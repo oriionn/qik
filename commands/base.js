@@ -12,6 +12,8 @@ const fsExtra = require('fs-extra');
 const prompt = require('prompt-sync')();
 // config utils for get config
 const { getUserConfig } = require("../utils/config");
+// createCommand for create the command for commander
+const { createCommand } = require("commander");
 
 // Function to know if the link is valid
 async function isValidGitLink(link) {
@@ -29,10 +31,8 @@ function getGitDirName(link) {
   return name.join(".");
 }
 
-module.exports = async (cmd) => {
-  let args = cmd.args;
-  let gitLink = args[0];
-  if (!gitLink) return cmd.help();
+const init = async (link, options) => {
+  let gitLink = link;
   let userConfig = getUserConfig();
   if (userConfig.aliases[gitLink]) gitLink = userConfig.aliases[gitLink];
 
@@ -213,3 +213,10 @@ module.exports = async (cmd) => {
     console.log(`The link you have entered is not valid.`.red);
   }
 }
+
+module.exports = createCommand("init")
+  .description("Init a template")
+  .argument("<link>", "The github link for the template.")
+  .option("-b, --branch", "The branch of the github template")
+  .option("-lr, --latest-release", "Use the latest release instead of the repository branch.")
+  .action(init)
