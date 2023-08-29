@@ -4,7 +4,7 @@ const { Command, Option } = require("commander");
 const pkg = require("./package.json");
 const ascii_txt_gen = require("ascii-text-generator");
 
-const init = require("./commands/base");
+const init = require("./commands/init");
 const saveAlias = require("./commands/saveAlias");
 const program = new Command("qik");
 
