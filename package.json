@@ -1,0 +1,32 @@
+{
+  "name": "qik",
+  "version": "1.0.0",
+  "description": "A simple &amp; configurable template manager.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "bin": {
+    "qik": "./app.js"
+  },
+  "author": "oriionn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oriionn/qik"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "ascii-text-generator": "^1.0.5",
+    "axios": "^1.5.0",
+    "colors": "^1.4.0",
+    "commander": "^11.0.0",
+    "fs": "^0.0.1-security",
+    "fs-extra": "^11.1.1",
+    "os": "^0.1.2",
+    "path": "^0.12.7",
+    "prompt-sync": "^4.2.0",
+    "smol-toml": "^1.1.2"
+  }
+}
