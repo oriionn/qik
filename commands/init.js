@@ -31,7 +31,27 @@ function getGitDirName(link) {
   return name.join(".");
 }
 
+function isGitHubLink(link) {
+  const githubPattern = /^https:\/\/github\.com\/|git@github\.com:/;
+  return githubPattern.test(link);
+}
+
+function extractOwnerAndRepo(link) {
+  const githubPattern = /^https:\/\/github\.com\/([^/]+)\/([^/]+)|git@github\.com:([^/]+)\/([^/]+)/;
+  const matches = link.match(githubPattern);
+
+  if (matches) {
+    const owner = matches[1] || matches[3];
+    const repo = matches[2] || matches[4];
+    return { owner, repo };
+  } else {
+    return null;
+  }
+}
+
 const init = async (link, options) => {
+  if (options.latestRelease && options.branch) return console.error(`The --branch and --latest-release options are not compatible with each other.`.red)
+
   let gitLink = link;
   let userConfig = getUserConfig();
   if (userConfig.aliases[gitLink]) gitLink = userConfig.aliases[gitLink];
@@ -39,9 +59,22 @@ const init = async (link, options) => {
   // Verify the link
   let iVGL = await isValidGitLink(gitLink);
   if (iVGL) {
+    let command = `git clone ${gitLink}`;
+    if (options.latestRelease === true) {
+      if (!isGitHubLink(gitLink)) return console.error(`The --latest-release option is not compatible with this git service.`.red);
+
+      let { owner, repo } = extractOwnerAndRepo(gitLink);
+      let req = await axios.get(`https://api.github.com/repos/${owner}/${repo.replace(/\.git$/, '')}/releases/latest`);
+      let infos = req.data;
+
+      command += ` -b ${infos.tag_name}`;
+    } else if (options.branch) {
+      command += ` -b ${options.branch}`;
+    }
+
     console.log(`Cloning repository...`.cyan);
     // Clone the repository
-    exec(`git clone ${gitLink}`, async (error, stdout, stderr) => {
+    exec(command, async (error, stdout, stderr) => {
       if (error) {
         console.error(`An error occurred when cloning the repo.`.red);
         return console.error(error.message);
@@ -217,6 +250,6 @@ const init = async (link, options) => {
 module.exports = createCommand("init")
   .description("Init a template")
   .argument("<link>", "The github link for the template.")
-  .option("-b, --branch", "The branch of the github template")
+  .option("-b, --branch <branch>", "The branch of the github template")
   .option("-lr, --latest-release", "Use the latest release instead of the repository branch.")
   .action(init)
