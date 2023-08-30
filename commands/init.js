@@ -334,11 +334,18 @@ const init = async (link, options) => {
             // Executing commands
             for (const cmd of categories["RUN"]) {
               if (cmd.length !== 0) {
-                await exec(cmd, (error, stdout, stderr) => {
-                  if (error) return console.error(error);
-                  if (stdout) console.log(stdout);
-                  if (stderr) console.log(stderr);
-                })
+                if (cmd.toLowerCase().startsWith("qik.move")) {
+                  let args = cmd.split(" ");
+                  let target = args[1];
+                  let dest = args[2];
+                  fsExtra.moveSync(target, dest, { overwrite: true });
+                } else {
+                  await exec(cmd, (error, stdout, stderr) => {
+                    if (error) return console.error(error);
+                    if (stdout) console.log(stdout);
+                    if (stderr) console.log(stderr);
+                  })
+                }
               }
             }
           } else {
