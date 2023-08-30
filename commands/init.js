@@ -137,7 +137,7 @@ const init = async (link, options) => {
 
   let gitLink = link;
   let userConfig = getUserConfig();
-  if (userConfig.aliases[gitLink]) gitLink = userConfig.aliases[gitLink];
+  if (userConfig.aliases && userConfig.aliases[gitLink]) gitLink = userConfig.aliases[gitLink];
 
   // Verify the link
   let iVGL = await isValidGitLink(gitLink);
