@@ -12,6 +12,8 @@ const fsExtra = require('fs-extra');
 const prompt = require('prompt-sync')();
 // config utils for get config
 const { getUserConfig } = require("../utils/config");
+// messages utils for get messages
+const getMsg = require("../utils/messages");
 // createCommand for create the command for commander
 const { createCommand } = require("commander");
 
@@ -131,7 +133,7 @@ function editFile(actions, type, ext, answer) {
 }
 
 const init = async (link, options) => {
-  if (options.latestRelease && options.branch) return console.error(`The --branch and --latest-release options are not compatible with each other.`.red)
+  if (options.latestRelease && options.branch) return console.error(getMsg("lr_and_branch_not_compatible").red)
 
   let gitLink = link;
   let userConfig = getUserConfig();
@@ -142,7 +144,7 @@ const init = async (link, options) => {
   if (iVGL) {
     let command = `git clone ${gitLink}`;
     if (options.latestRelease === true) {
-      if (!isGitHubLink(gitLink)) return console.error(`The --latest-release option is not compatible with this git service.`.red);
+      if (!isGitHubLink(gitLink)) return console.error(getMsg("lr_not_compatible").red);
 
       let { owner, repo } = extractOwnerAndRepo(gitLink);
       let req = await axios.get(`https://api.github.com/repos/${owner}/${repo.replace(/\.git$/, '')}/releases/latest`);
@@ -153,20 +155,20 @@ const init = async (link, options) => {
       command += ` -b ${options.branch}`;
     }
 
-    console.log(`Cloning repository...`.cyan);
+    console.log(getMsg("cloning_repository").cyan);
     // Clone the repository
     exec(command, async (error, stdout, stderr) => {
       if (error) {
-        console.error(`An error occurred when cloning the repo.`.red);
+        console.error(getMsg("error_when_cloning").red);
         return console.error(error.message);
       }
       if (stderr || stdout) {
         let dir = getGitDirName(gitLink);
 
         if (fs.existsSync(`./${dir}`)) {
-          console.log(`Repository cloned.`.cyan);
+          console.log(getMsg("repository_cloned").cyan);
           if (fs.existsSync(`./${dir}/Qikfile`)) {
-            console.log("Parsing Qikfile...".cyan);
+            console.log(getMsg("parsing_qikfile").cyan);
             let config = fs.readFileSync(`${dir}/Qikfile`).toString();
             let lines = config.split("\n");
 
@@ -190,21 +192,21 @@ const init = async (link, options) => {
 
             // Warning for directory
             console.log(" ");
-            console.log(`Warning ! The template will be created in ${process.cwd()} !  Be careful if there is already content in it.`.red)
-            let continuE = prompt(`Continue ? (y/N) `.cyan);
+            console.log(getMsg("warning_before_init").replaceAll("{CWD}", process.cwd()).red)
+            let continuE = prompt(getMsg("continue").cyan);
             if (!continuE) continuE = "n";
             if (continuE.toLowerCase() !== "y") { fs.rmSync(`./${dir}`, { recursive: true, force: true }); process.exit(); }
 
             // Warning Message
             if (categories.WARNING_MESSAGE.length !== 0) {
               console.log(" ");
-              console.log("Warning from the creator of the template: ".red);
+              console.log(getMsg("warning_from_owner").red);
               for (const warning of categories["WARNING_MESSAGE"]) {
                 if (warning.length !== 0) {
                   console.log(`${warning}`.red);
                 }
               }
-              let contiNue = prompt("Continue ? (y/N) ".cyan);
+              let contiNue = prompt(getMsg("continue").cyan);
               if (!contiNue) contiNue = "n";
               if (contiNue.toLowerCase() !== "y") { fs.rmSync(`./${dir}`, { recursive: true, force: true }); process.exit(); }
             }
@@ -218,7 +220,7 @@ const init = async (link, options) => {
             // Questions
             if (categories.QUESTION.length !== 0) {
               console.log(" ");
-              console.log("Loading questions...".cyan)
+              console.log(getMsg("loading_questions").cyan)
 
               // Questionning user
               for (const instruction of categories["QUESTION"]) {
@@ -301,7 +303,7 @@ const init = async (link, options) => {
             // Write message
             if (categories.MESSAGE.length !== 0) {
               console.log(" ");
-              console.log("Message of the template's owner:".cyan);
+              console.log(getMsg("message_from_owner").cyan);
               for (const msg of categories["MESSAGE"]) {
                 if (msg.length !== 0) {
                   console.log(msg.yellow)
@@ -311,7 +313,7 @@ const init = async (link, options) => {
 
             if (categories.RUN.length !== 0) {
               console.log(" ")
-              console.log("Executing commands...".cyan)
+              console.log(getMsg("executing_commands").cyan)
               console.log(" ")
 
               // Executing commands
@@ -331,24 +333,24 @@ const init = async (link, options) => {
             }
           } else {
             // If Qikfile doesn't exists.
-            console.error(`No qik configuration files detected.`.red)
+            console.error(getMsg("no_qikfile").red)
             fs.rmSync(`./${dir}`, {recursive: true, force: true});
           }
         } else {
           // If clone directory doesn't exists
-          console.error(`An error occurred when cloning the repo.`.red);
+          console.error(getMsg("error_when_cloning").red);
         }
       }
     })
   } else {
     // If the git link is not valid.
-    console.log(`The link you have entered is not valid.`.red);
+    console.log(getMsg("link_unvalid").red);
   }
 }
 
 module.exports = createCommand("init")
-  .description("Init a template")
-  .argument("<link>", "The github link for the template.")
-  .option("-b, --branch <branch>", "The branch of the github template")
-  .option("-lr, --latest-release", "Use the latest release instead of the repository branch.")
+  .description(getMsg("init_description"))
+  .argument("<link>", getMsg("link_arg"))
+  .option("-b, --branch <branch>", getMsg("branch_arg"))
+  .option("-lr, --latest-release", getMsg("lr_arg"))
   .action(init)

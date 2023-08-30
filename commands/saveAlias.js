@@ -4,6 +4,8 @@ const { createCommand } = require("commander");
 const TOML = require('@iarna/toml')
 // config utils for get config
 const { getUserConfig, getConfigPath } = require("../utils/config");
+// messages utils for get messages
+const getMsg = require("../utils/messages");
 // fs for set settings
 const fs = require("fs");
 
@@ -14,11 +16,11 @@ function saveAlias(link, alias) {
   settings.aliases[alias] = link;
   fs.writeFileSync(getConfigPath(), TOML.stringify(settings));
 
-  console.log(`The alias "${alias}" has been saved in the parameters.`.cyan);
+  console.log(getMsg("set_alias").replace("{ALIAS}", alias).cyan);
 }
 
 module.exports = createCommand("save-alias")
-  .description("Save a alias for a template.")
-  .argument("<link>", "The git link for the template.")
-  .argument("<alias>", "The alias")
+  .description(getMsg("saveAlias_description"))
+  .argument("<link>", getMsg("link_arg"))
+  .argument("<alias>", getMsg("alias_arg"))
   .action(saveAlias)
