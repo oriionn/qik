@@ -1,5 +1,5 @@
 // Function for execute command
-const {exec} = require("child_process");
+const {exec, execSync} = require("child_process");
 // Axios for http request
 const axios = require("axios");
 // Colors for colors in terminal
@@ -324,11 +324,7 @@ const init = async (link, options) => {
                     let dest = args[2];
                     fsExtra.moveSync(target, dest, { overwrite: true });
                   } else {
-                    await exec(cmd, (error, stdout, stderr) => {
-                      if (error) return console.error(error);
-                      if (stdout) console.log(stdout);
-                      if (stderr) console.log(stderr);
-                    })
+                    execSync(cmd, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
                   }
                 }
               }
