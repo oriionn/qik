@@ -173,7 +173,8 @@ const init = async (link, options) => {
             const categories = {
               QUESTION: [],
               RUN: [],
-              MESSAGE: []
+              MESSAGE: [],
+              WARNING_MESSAGE: []
             }
             let currentCategory = undefined;
 
@@ -187,121 +188,148 @@ const init = async (link, options) => {
               }
             }
 
+            // Warning for directory
+            console.log(" ");
+            console.log(`Warning ! The template will be created in ${process.cwd()} !  Be careful if there is already content in it.`.red)
+            let continuE = prompt(`Continue ? (y/N)`.cyan);
+            if (!continuE) continuE = "n";
+            if (continuE.toLowerCase() !== "y") { fs.rmSync(`./${dir}`, { recursive: true, force: true }); process.exit(); }
+
+            // Warning Message
+            if (categories.WARNING_MESSAGE.length !== 0) {
+              console.log(" ");
+              console.log("Warning from the creator of the template: ".red);
+              for (const warning of categories["WARNING_MESSAGE"]) {
+                if (warning.length !== 0) {
+                  console.log(`${warning}`.red);
+                }
+              }
+              let contiNue = prompt("Continue ? (y/N) ".cyan);
+              if (!contiNue) contiNue = "n";
+              if (contiNue.toLowerCase() !== "y") { fs.rmSync(`./${dir}`, { recursive: true, force: true }); process.exit(); }
+            }
+
             // Copy the repo in the main directory
             await fsExtra.copySync(`./${dir}`, `./`);
             fs.rmSync(`./${dir}`, { recursive: true, force: true });
             fs.rmSync(`./.git`, { recursive: true, force: true });
             fs.rmSync(`./Qikfile`, { force: true });
 
-            console.log("Loading questions...".cyan)
-            console.log(" ");
+            // Questions
+            if (categories.QUESTION.length !== 0) {
+              console.log(" ");
+              console.log("Loading questions...".cyan)
 
-            // Questionning user
-            for (const instruction of categories["QUESTION"]) {
-              if (instruction.length !== 0) {
-                const typePattern = /^\((.*?)\)/gm;
+              // Questionning user
+              for (const instruction of categories["QUESTION"]) {
+                if (instruction.length !== 0) {
+                  const typePattern = /^\((.*?)\)/gm;
 
-                let type = typePattern.exec(instruction)[1];
-                let defaultPattern = /\[(.*?)\]/g;
-                let defaulT = defaultPattern.exec(instruction.split(";")[0]);
-                if (defaulT) defaulT = defaulT[1]; else defaulT = undefined;
-                let content = "";
-                if (defaulT) content = instruction.split(";")[0].split("]")[1];
-                else content = instruction.split(";")[0].split(")")[1];
+                  let type = typePattern.exec(instruction)[1];
+                  let defaultPattern = /\[(.*?)\]/g;
+                  let defaulT = defaultPattern.exec(instruction.split(";")[0]);
+                  if (defaulT) defaulT = defaulT[1]; else defaulT = undefined;
+                  let content = "";
+                  if (defaulT) content = instruction.split(";")[0].split("]")[1];
+                  else content = instruction.split(";")[0].split(")")[1];
 
-                if (content.startsWith(" ")) content = content.slice(1);
-                if (content.endsWith(" ")) content = content.slice(0, -1);
+                  if (content.startsWith(" ")) content = content.slice(1);
+                  if (content.endsWith(" ")) content = content.slice(0, -1);
 
-
-                if (type === "yon") {
-                  if (defaulT === "y") content += " (Y/n)";
-                  else content += "(y/N)";
-                } else if (type === "var") {
-                  if (defaulT) content += ` (${defaulT})`;
-                }
-
-                await wait(1000)
-                let answer = prompt(content.yellow + " ");
-                if (type === "yon") {
-                  YON(answer);
-                } else if (type === "var") {
-                  VAR(answer)
-                }
-
-                // function for yes or no questions
-                function YON(answer) {
-                  if (!answer) answer = defaulT;
-                  let action = instruction.split(";")[instruction.split(";").length - 1];
-
-                  let actionYes = action.split("§")[0];
-                  let actionNo = action.split("§")[1];
-
-                  let actions = []
-                  if (answer.toLowerCase() === "y") actions = actionYes.split(":");
-                  else actions = actionNo.split(":");
-
-                  if (actions[0].toLowerCase().includes("edit_json")) {
-                    editFile(actions, "yon", "json", answer)
-                  } else if (actions[0].toLowerCase().includes("exec")) {
-                    categories.RUN.push(actions[1]);
-                  } else if (actions[0].toLowerCase().includes("edit_toml")) {
-                    editFile(actions, "yon", "toml", answer);
-                  } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
-                    editFile(actions, "yon", "dotenv", answer)
+                  if (type === "yon") {
+                    if (defaulT === "y") content += " (Y/n)";
+                    else content += " (y/N)";
+                  } else if (type === "var") {
+                    if (defaulT) content += ` (${defaulT})`;
                   }
-                }
 
-                // function for var type question
-                function VAR(answer) {
-                  if (defaulT && !answer) answer = defaulT;
-                  if (!defaulT && !answer) return;
+                  await wait(1000)
+                  let answer = prompt(content.yellow + " ");
+                  if (type === "yon") {
+                    YON(answer);
+                  } else if (type === "var") {
+                    VAR(answer)
+                  }
 
-                  let action = instruction.split(";")[instruction.split(";").length - 1];
-                  let actions = action.split(":")
+                  // function for yes or no questions
+                  function YON(answer) {
+                    if (!answer) answer = defaulT;
+                    let action = instruction.split(";")[instruction.split(";").length - 1];
 
-                  if (actions[0].toLowerCase().includes("edit_json")) {
-                    editFile(actions, "var", "json", answer)
-                  } else if (actions[0].toLowerCase().includes("exec")) {
-                    exec(actions[1], (error, stdout, stderr) => {
-                      console.log(stdout);
-                    })
-                  } else if (actions[0].toLowerCase().includes("edit_toml")) {
-                    editFile(actions, "var", "toml", answer);
-                  } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
-                    editFile(actions, "var", "dotenv", answer)
+                    let actionYes = action.split("§")[0];
+                    let actionNo = action.split("§")[1];
+
+                    let actions = []
+                    if (answer.toLowerCase() === "y") actions = actionYes.split(":");
+                    else actions = actionNo.split(":");
+
+                    if (actions[0].toLowerCase().includes("edit_json")) {
+                      editFile(actions, "yon", "json", answer)
+                    } else if (actions[0].toLowerCase().includes("exec")) {
+                      categories.RUN.push(actions[1]);
+                    } else if (actions[0].toLowerCase().includes("edit_toml")) {
+                      editFile(actions, "yon", "toml", answer);
+                    } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
+                      editFile(actions, "yon", "dotenv", answer)
+                    }
+                  }
+
+                  // function for var type question
+                  function VAR(answer) {
+                    if (defaulT && !answer) answer = defaulT;
+                    if (!defaulT && !answer) return;
+
+                    let action = instruction.split(";")[instruction.split(";").length - 1];
+                    let actions = action.split(":")
+
+                    if (actions[0].toLowerCase().includes("edit_json")) {
+                      editFile(actions, "var", "json", answer)
+                    } else if (actions[0].toLowerCase().includes("exec")) {
+                      exec(actions[1], (error, stdout, stderr) => {
+                        console.log(stdout);
+                      })
+                    } else if (actions[0].toLowerCase().includes("edit_toml")) {
+                      editFile(actions, "var", "toml", answer);
+                    } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
+                      editFile(actions, "var", "dotenv", answer)
+                    }
                   }
                 }
               }
             }
 
             // Write message
-            console.log(" ");
-            console.log("Message of the template's owner:".red);
-            for (const msg of categories["MESSAGE"]) {
-              if (msg.length !== 0) {
-                console.log(msg.yellow)
+            if (categories.MESSAGE.length !== 0) {
+              console.log(" ");
+              console.log("Message of the template's owner:".cyan);
+              for (const msg of categories["MESSAGE"]) {
+                if (msg.length !== 0) {
+                  console.log(msg.yellow)
+                }
               }
             }
 
-            console.log(" ")
-            console.log("Executing commands...".cyan)
-            console.log(" ")
+            if (categories.RUN.length !== 0) {
+              console.log(" ")
+              console.log("Executing commands...".cyan)
+              console.log(" ")
 
-            // Executing commands
-            await wait(1000)
-            for (const cmd of categories["RUN"]) {
-              if (cmd.length !== 0) {
-                if (cmd.toLowerCase().startsWith("qik.move")) {
-                  let args = cmd.split(" ");
-                  let target = args[1];
-                  let dest = args[2];
-                  fsExtra.moveSync(target, dest, { overwrite: true });
-                } else {
-                  await exec(cmd, (error, stdout, stderr) => {
-                    if (error) return console.error(error);
-                    if (stdout) console.log(stdout);
-                    if (stderr) console.log(stderr);
-                  })
+              // Executing commands
+              await wait(1000)
+              for (const cmd of categories["RUN"]) {
+                if (cmd.length !== 0) {
+                  if (cmd.toLowerCase().startsWith("qik.move")) {
+                    let args = cmd.split(" ");
+                    let target = args[1];
+                    let dest = args[2];
+                    fsExtra.moveSync(target, dest, { overwrite: true });
+                  } else {
+                    await exec(cmd, (error, stdout, stderr) => {
+                      if (error) return console.error(error);
+                      if (stdout) console.log(stdout);
+                      if (stderr) console.log(stderr);
+                    })
+                  }
                 }
               }
             }
