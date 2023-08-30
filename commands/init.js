@@ -35,11 +35,13 @@ function getGitDirName(link) {
   return name.join(".");
 }
 
+// Function for verify if it is a valid git link
 function isGitHubLink(link) {
   const githubPattern = /^https:\/\/github\.com\/|git@github\.com:/;
   return githubPattern.test(link);
 }
 
+// Function for extract the name of the owner and the repo
 function extractOwnerAndRepo(link) {
   const githubPattern = /^https:\/\/github\.com\/([^/]+)\/([^/]+)|git@github\.com:([^/]+)\/([^/]+)/;
   const matches = link.match(githubPattern);
@@ -53,6 +55,7 @@ function extractOwnerAndRepo(link) {
   }
 }
 
+// Function for edit env file
 function updateEnvVariable(filePath, variableName, newValue) {
   fs.readFile(filePath, 'utf8', (err, data) => {
     if (err) {
@@ -80,6 +83,51 @@ function updateEnvVariable(filePath, variableName, newValue) {
 
     fs.writeFileSync(filePath, updatedContent, 'utf8');
   });
+}
+
+// Patterns for extract file for edit
+const patterns = {
+  json: /\w+\.json/,
+  toml: /\w+\.toml/
+}
+
+// Function for edit file
+function editFile(actions, type, ext, answer) {
+  let target = actions[1];
+  let fileTarget = "";
+  if (ext === "dotenv") fileTarget = target.split("[")[0];
+  else fileTarget = target.match(patterns[ext])[0];
+  let varTarget = target.replace(fileTarget, "");
+  if (varTarget.startsWith(" ")) varTarget = varTarget.slice(1);
+
+  if (type === "yon") {
+    actions[2] = actions[2].split(")");
+    actions[2].pop()
+    actions[2] = actions[2].join(")");
+  }
+  let newValue = actions[2];
+  if (newValue.startsWith(" ")) newValue = newValue.slice(1);
+
+  if (ext === "json") {
+    eval(`const fs = require("fs"); let jsonFile = JSON.parse(fs.readFileSync('${fileTarget}')); jsonFile${varTarget} = "${newValue.replaceAll("{RES}", `${answer}`)}"; fs.writeFileSync('${fileTarget}', JSON.stringify(jsonFile, null, 4));`);
+  } else if (ext === "toml") {
+    let parentTargetVar = varTarget.split("]");
+    if (parentTargetVar.length !== 1) {
+      parentTargetVar = `${parentTargetVar[0]}]`;
+    } else {
+      parentTargetVar = "no"
+    }
+
+    eval(`const fs = require("fs"); const TOML = require('@iarna/toml'); let tomlFile = TOML.parse(fs.readFileSync('${fileTarget}')); if ('${parentTargetVar}' !== "no") tomlFile${parentTargetVar} = {}; tomlFile${varTarget} = "${newValue.replaceAll("{RES}", answer)}"; fs.writeFileSync('${fileTarget}', TOML.stringify(tomlFile));`);
+  } else if (ext === "dotenv") {
+    varTarget = varTarget.slice(1, -1);
+    if (varTarget.endsWith(" ")) varTarget = varTarget.slice(0, -1);
+    if (varTarget.endsWith("]")) varTarget = varTarget.slice(0, -1);
+    fileTarget = fileTarget.replaceAll(" ", "");
+    eval(`updateEnvVariable('${fileTarget}', ${varTarget}, '${newValue.replaceAll("{RES}", answer)}')`);
+  }
+
+  return { fileTarget, varTarget, newValue };
 }
 
 const init = async (link, options) => {
@@ -193,65 +241,13 @@ const init = async (link, options) => {
                   else actions = actionNo.split(":");
 
                   if (actions[0].toLowerCase().includes("edit_json")) {
-                    let target = actions[1];
-                    let fileTarget = target.match(/\w+\.json/)[0];
-                    let varTarget = target.replace(fileTarget, "");
-                    if (varTarget.startsWith(" ")) varTarget = varTarget.slice(1);
-
-                    actions[2] = actions[2].split(")");
-                    actions[2].pop()
-                    actions[2] = actions[2].join(")");
-                    let newValue = actions[2];
-                    if (newValue.startsWith(" ")) newValue = newValue.slice(1);
-
-                    eval(`const fs = require("fs");
-                    let jsonFile = JSON.parse(fs.readFileSync('${fileTarget}'));
-                    jsonFile${varTarget} = "${newValue}";
-                    fs.writeFileSync('${fileTarget}', JSON.stringify(jsonFile, null, 4));`);
+                    editFile(actions, "yon", "json", answer)
                   } else if (actions[0].toLowerCase().includes("exec")) {
                     categories.RUN.push(actions[1]);
                   } else if (actions[0].toLowerCase().includes("edit_toml")) {
-                    let target = actions[1];
-                    let fileTarget = target.match(/\w+\.toml/)[0];
-                    let varTarget = target.replace(fileTarget, "");
-                    if (varTarget.startsWith(" ")) varTarget = varTarget.slice(1);
-
-                    actions[2] = actions[2].split(")");
-                    actions[2].pop()
-                    actions[2] = actions[2].join(")");
-                    let newValue = actions[2];
-                    if (newValue.startsWith(" ")) newValue = newValue.slice(1);
-
-                    let parentTargetVar = varTarget.split("]");
-                    if (parentTargetVar.length !== 1) {
-                      parentTargetVar = `${parentTargetVar[0]}]`;
-                    } else {
-                      parentTargetVar = "no"
-                    }
-
-                    eval(`const fs = require("fs"); const TOML = require('@iarna/toml');
-                    let tomlFile = TOML.parse(fs.readFileSync('${fileTarget}'));
-                    if ('${parentTargetVar}' !== "no") tomlFile${parentTargetVar} = {};
-                    tomlFile${varTarget} = "${newValue}";
-                    fs.writeFileSync('${fileTarget}', TOML.stringify(tomlFile));`);
+                    editFile(actions, "yon", "toml", answer);
                   } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
-                    let target = actions[1];
-                    let fileTarget = target.split("[")[0];
-                    let varTarget = target.replace(fileTarget, "");
-                    if (varTarget.startsWith(" ")) varTarget = varTarget.slice(1);
-
-                    actions[2] = actions[2].split(")");
-                    actions[2].pop()
-                    actions[2] = actions[2].join(")");
-                    let newValue = actions[2];
-                    if (newValue.startsWith(" ")) newValue = newValue.slice(1);
-
-                    varTarget = varTarget.slice(1, -1);
-                    if (varTarget.endsWith(" ")) varTarget = varTarget.slice(0, -1);
-                    if (varTarget.endsWith("]")) varTarget = varTarget.slice(0, -1);
-                    fileTarget = fileTarget.replaceAll(" ", "");
-
-                    eval(`updateEnvVariable('${fileTarget}', ${varTarget}, '${newValue}')`);
+                    editFile(actions, "yon", "dotenv", answer)
                   }
                 }
 
@@ -264,55 +260,15 @@ const init = async (link, options) => {
                   let actions = action.split(":")
 
                   if (actions[0].toLowerCase().includes("edit_json")) {
-                    let target = actions[1];
-                    let fileTarget = target.match(/\w+\.json/)[0];
-                    let varTarget = target.replace(fileTarget, "");
-                    if (varTarget.startsWith(" ")) varTarget = varTarget.slice(1);
-                    let newValue = actions[2];
-                    if (newValue.startsWith(" ")) newValue = newValue.slice(1);
-
-                    eval(`const fs = require("fs");
-                    let jsonFile = JSON.parse(fs.readFileSync('${fileTarget}'));
-                    jsonFile${varTarget} = "${newValue.replaceAll("{RES}", answer)}";
-                    fs.writeFileSync('${fileTarget}', JSON.stringify(jsonFile, null, 4));`);
+                    editFile(actions, "var", "json", answer)
                   } else if (actions[0].toLowerCase().includes("exec")) {
                     exec(actions[1], (error, stdout, stderr) => {
                       console.log(stdout);
                     })
                   } else if (actions[0].toLowerCase().includes("edit_toml")) {
-                    let target = actions[1];
-                    let fileTarget = target.match(/\w+\.toml/)[0];
-                    let varTarget = target.replace(fileTarget, "");
-                    if (varTarget.startsWith(" ")) varTarget = varTarget.slice(1);
-                    let newValue = actions[2];
-                    if (newValue.startsWith(" ")) newValue = newValue.slice(1);
-
-                    let parentTargetVar = varTarget.split("]");
-                    if (parentTargetVar.length !== 1) {
-                      parentTargetVar = `${parentTargetVar[0]}]`;
-                    } else {
-                      parentTargetVar = "no"
-                    }
-
-                    eval(`const fs = require("fs"); const TOML = require('@iarna/toml');
-                    let tomlFile = TOML.parse(fs.readFileSync('${fileTarget}'));
-                    if ('${parentTargetVar}' !== "no") tomlFile${parentTargetVar} = {};
-                    tomlFile${varTarget} = "${newValue.replaceAll("{RES}", answer)}";
-                    fs.writeFileSync('${fileTarget}', TOML.stringify(tomlFile));`);
+                    editFile(actions, "var", "toml", answer);
                   } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
-                    let target = actions[1];
-                    let fileTarget = target.split("[")[0];
-                    let varTarget = target.replace(fileTarget, "");
-                    if (varTarget.startsWith(" ")) varTarget = varTarget.slice(1);
-                    let newValue = actions[2];
-                    if (newValue.startsWith(" ")) newValue = newValue.slice(1);
-
-                    varTarget = varTarget.slice(1, -1);
-                    if (varTarget.endsWith(" ")) varTarget = varTarget.slice(0, -1);
-                    if (varTarget.endsWith("]")) varTarget = varTarget.slice(0, -1);
-                    fileTarget = fileTarget.replaceAll(" ", "");
-
-                    eval(`updateEnvVariable('${fileTarget}', ${varTarget}, '${newValue.replaceAll("{RES}", answer)}')`);
+                    editFile(actions, "var", "dotenv", answer)
                   }
                 }
               }
@@ -332,6 +288,7 @@ const init = async (link, options) => {
             console.log(" ")
 
             // Executing commands
+            await wait(1000)
             for (const cmd of categories["RUN"]) {
               if (cmd.length !== 0) {
                 if (cmd.toLowerCase().startsWith("qik.move")) {
