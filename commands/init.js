@@ -191,7 +191,7 @@ const init = async (link, options) => {
             // Warning for directory
             console.log(" ");
             console.log(`Warning ! The template will be created in ${process.cwd()} !  Be careful if there is already content in it.`.red)
-            let continuE = prompt(`Continue ? (y/N)`.cyan);
+            let continuE = prompt(`Continue ? (y/N) `.cyan);
             if (!continuE) continuE = "n";
             if (continuE.toLowerCase() !== "y") { fs.rmSync(`./${dir}`, { recursive: true, force: true }); process.exit(); }
 
