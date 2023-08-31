@@ -138,6 +138,39 @@ const init = async (link, options) => {
   let gitLink = link;
   let userConfig = getUserConfig();
   if (userConfig.aliases && userConfig.aliases[gitLink]) gitLink = userConfig.aliases[gitLink];
+  if (!userConfig.options) { userConfig.options = {}; userConfig.options["defaultAliases"] = true; }
+  if (userConfig.options && userConfig.options["defaultAliases"]) {
+    if (gitLink === "react") {
+      // Request project name
+      let projectName = prompt(getMsg("project_name").cyan);
+      if (!projectName) {
+        console.error(getMsg("project_name_required").red);
+        process.exit();
+      }
+
+      execSync(`npx create-react-app ${projectName}`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+      return;
+    } else if (gitLink === "next") {
+      execSync(`npx create-next-app`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+      return;
+    } else if (gitLink === "tauri") {
+      execSync(`npm create tauri-app@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+      return;
+    } else if (gitLink === "vue") {
+      execSync(`npm create vue@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+      return;
+    } else if (gitLink === "nuxt") {
+      // Request project name
+      let projectName = prompt(getMsg("project_name").cyan);
+      if (!projectName) {
+        console.error(getMsg("project_name_required").red);
+        process.exit();
+      }
+
+      execSync(`npx nuxi@latest init ${projectName}`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+      return;
+    }
+  }
 
   // Verify the link
   let iVGL = await isValidGitLink(gitLink);
@@ -150,7 +183,9 @@ const init = async (link, options) => {
       let req = await axios.get(`https://api.github.com/repos/${owner}/${repo.replace(/\.git$/, '')}/releases/latest`);
       let infos = req.data;
 
-      command += ` -b ${infos.tag_name}`;
+      if (infos.tag_name) {
+        command += ` -b ${infos.tag_name}`;
+      }
     } else if (options.branch) {
       command += ` -b ${options.branch}`;
     }

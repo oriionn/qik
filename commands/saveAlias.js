@@ -10,9 +10,11 @@ const getMsg = require("../utils/messages");
 const fs = require("fs");
 
 function saveAlias(link, alias) {
+  let defaultAliases = [ "react", "next", "tauri", "vue", "nuxt" ]
   let settings = getUserConfig();
   if (!settings.aliases) settings.aliases = {};
 
+  if (defaultAliases.includes(alias)) return console.error(getMsg("setalias_defaultalias_error").replace("{ALIAS}", alias).red);
   settings.aliases[alias] = link;
   fs.writeFileSync(getConfigPath(), TOML.stringify(settings));
 
