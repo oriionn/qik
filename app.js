@@ -8,6 +8,7 @@ const getMsg = require("./utils/messages");
 const init = require("./commands/init");
 const saveAlias = require("./commands/saveAlias");
 const toggleDefaultAliases = require("./commands/toggleDefaultAliases");
+const removeAlias = require("./commands/removeAlias");
 const program = new Command("qik");
 
 program
@@ -17,6 +18,7 @@ program
   .addCommand(saveAlias)
   .addCommand(init)
   .addCommand(toggleDefaultAliases)
+  .addCommand(removeAlias)
   .parseAsync()
     .catch((e) => {
       console.log(e);
