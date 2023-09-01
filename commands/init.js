@@ -16,6 +16,8 @@ const { getUserConfig } = require("../utils/config");
 const getMsg = require("../utils/messages");
 // createCommand for create the command for commander
 const { createCommand } = require("commander");
+// jsonc for edit jsonc files
+const jsonc = require('jsonc');
 
 // Function to know if the link is valid
 async function isValidGitLink(link) {
@@ -90,7 +92,8 @@ function updateEnvVariable(filePath, variableName, newValue) {
 // Patterns for extract file for edit
 const patterns = {
   json: /\w+\.json/,
-  toml: /\w+\.toml/
+  toml: /\w+\.toml/,
+  cjson: /\w+\.jsonc/
 }
 
 // Function for edit file
@@ -127,6 +130,8 @@ function editFile(actions, type, ext, answer) {
     if (varTarget.endsWith("]")) varTarget = varTarget.slice(0, -1);
     fileTarget = fileTarget.replaceAll(" ", "");
     eval(`updateEnvVariable('${fileTarget}', ${varTarget}, '${newValue.replaceAll("{RES}", answer)}')`);
+  } else if (ext === "cjson") {
+    eval(`const fs = require("fs"); const jsonc = require("jsonc"); let jsonFile = jsonc.parse(fs.readFileSync('${fileTarget}').toString()); jsonFile${varTarget} = "${newValue.replaceAll("{RES}", `${answer}`)}"; fs.writeFileSync('${fileTarget}', JSON.stringify(jsonFile, null, 4));`);
   }
 
   return { fileTarget, varTarget, newValue };
@@ -303,7 +308,9 @@ const init = async (link, options) => {
                     if (answer.toLowerCase() === "y") actions = actionYes.split(":");
                     else actions = actionNo.split(":");
 
-                    if (actions[0].toLowerCase().includes("edit_json")) {
+                    if (actions[0].toLowerCase().includes("edit_jsonc")) {
+                      editFile(actions, "yon", "cjson", answer);
+                    } else if (actions[0].toLowerCase().includes("edit_json")) {
                       editFile(actions, "yon", "json", answer)
                     } else if (actions[0].toLowerCase().includes("exec")) {
                       categories.RUN.push(actions[1]);
@@ -322,7 +329,9 @@ const init = async (link, options) => {
                     let action = instruction.split(";")[instruction.split(";").length - 1];
                     let actions = action.split(":")
 
-                    if (actions[0].toLowerCase().includes("edit_json")) {
+                    if (actions[0].toLowerCase().includes("edit_jsonc")) {
+                      editFile(actions, "var", "cjson", answer);
+                    } else if (actions[0].toLowerCase().includes("edit_json")) {
                       editFile(actions, "var", "json", answer)
                     } else if (actions[0].toLowerCase().includes("exec")) {
                       exec(actions[1], (error, stdout, stderr) => {
