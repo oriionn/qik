@@ -169,6 +169,9 @@ const init = async (link, options) => {
 
       execSync(`npx nuxi@latest init ${projectName}`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
       return;
+    } else if (gitLink === "vite") {
+      execSync(`npm create vite@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+      return;
     }
   }
 
@@ -360,6 +363,10 @@ const init = async (link, options) => {
                     let target = args[1];
                     let dest = args[2];
                     fsExtra.moveSync(target, dest, { overwrite: true });
+                  } else if (cmd.toLowerCase().startsWith("qik.remove")) {
+                    let args = cmd.split(" ");
+                    let target = args[1];
+                    fs.rmSync(target, { recursive: true, force: true });
                   } else {
                     execSync(cmd, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
                   }
