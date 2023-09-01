@@ -10,7 +10,7 @@ const getMsg = require("../utils/messages");
 const fs = require("fs");
 
 function saveAlias(link, alias) {
-  let defaultAliases = [ "react", "next", "tauri", "vue", "nuxt" ]
+  let defaultAliases = [ "react", "next", "tauri", "vue", "nuxt", "vite" ]
   let settings = getUserConfig();
   if (!settings.aliases) settings.aliases = {};
 
