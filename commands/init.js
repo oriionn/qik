@@ -219,6 +219,7 @@ const init = async (link, options) => {
             console.log(getMsg("parsing_qikfile").cyan);
             let config = fs.readFileSync(`${dir}/Qikfile`).toString();
             let lines = config.split("\n");
+            const variables = {};
 
             const categories = {
               QUESTION: [],
@@ -324,6 +325,7 @@ const init = async (link, options) => {
                     } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
                       editFile(actions, "yon", "dotenv", answer)
                     }
+                    // NOT EXECUTION : VOID
                   }
 
                   // function for var type question
@@ -347,6 +349,7 @@ const init = async (link, options) => {
                     } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
                       editFile(actions, "var", "dotenv", answer)
                     }
+                    // NOT EXECUTION : VOID
                   }
                 }
               }
