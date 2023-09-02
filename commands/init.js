@@ -173,6 +173,15 @@ const init = async (link, options) => {
       return execSync(`npm create vite@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
     } else if (gitLink === "astro") {
       return execSync(`npm create astro@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+    } else if (gitLink === "svelte") {
+      // Request project name
+      let projectName = prompt(getMsg("project_name").cyan);
+      if (!projectName) {
+        console.error(getMsg("project_name_required").red);
+        process.exit();
+      }
+
+      return execSync(`npm create svelte@latest ${projectName}`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
     }
   }
 
