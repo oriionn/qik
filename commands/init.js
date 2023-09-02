@@ -225,7 +225,8 @@ const init = async (link, options) => {
               QUESTION: [],
               RUN: [],
               MESSAGE: [],
-              WARNING_MESSAGE: []
+              WARNING_MESSAGE: [],
+              VAR: []
             }
             let currentCategory = undefined;
 
@@ -266,6 +267,18 @@ const init = async (link, options) => {
             fs.rmSync(`./.git`, { recursive: true, force: true });
             fs.rmSync(`./Qikfile`, { force: true });
 
+            for (const variable in categories["VAR"]) {
+                if (variable.length >= 1) {
+                    let varName = categories["VAR"][variable].split(":")[0].replaceAll(" ", "");
+                    let varValue = categories["VAR"][variable].split(":")[1];
+                    if (varValue !== undefined) {
+                      if (varValue.startsWith(" ")) varValue = varValue.slice(1);
+                      variables[varName] = varValue;
+                    }
+                }
+            }
+            console.log(variables)
+
             // Questions
             if (categories.QUESTION.length !== 0) {
               console.log(" ");
@@ -292,65 +305,96 @@ const init = async (link, options) => {
                     else content += " (y/N)";
                   } else if (type === "var") {
                     if (defaulT) content += ` (${defaulT})`;
-                  }
-
-                  await wait(1000)
-                  let answer = prompt(content.yellow + " ");
-                  if (type === "yon") {
-                    YON(answer);
-                  } else if (type === "var") {
-                    VAR(answer)
-                  }
-
-                  // function for yes or no questions
-                  function YON(answer) {
-                    if (!answer) answer = defaulT;
-                    let action = instruction.split(";")[instruction.split(";").length - 1];
-
-                    let actionYes = action.split("§")[0];
-                    let actionNo = action.split("§")[1];
-
-                    let actions = []
-                    if (answer.toLowerCase() === "y") actions = actionYes.split(":");
-                    else actions = actionNo.split(":");
-
-                    if (actions[0].toLowerCase().includes("edit_jsonc")) {
-                      editFile(actions, "yon", "cjson", answer);
-                    } else if (actions[0].toLowerCase().includes("edit_json")) {
-                      editFile(actions, "yon", "json", answer)
-                    } else if (actions[0].toLowerCase().includes("exec")) {
-                      categories.RUN.push(actions[1]);
-                    } else if (actions[0].toLowerCase().includes("edit_toml")) {
-                      editFile(actions, "yon", "toml", answer);
-                    } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
-                      editFile(actions, "yon", "dotenv", answer)
+                  } else if (type === "sel") {
+                    if (!defaulT) return console.error(getMsg("sel_not_default").red);
+                    let choices = defaulT.split(",");
+                    let choicesContent = "";
+                    let i = 0;
+                    for (const choice of choices) {
+                      i++;
+                      if (i === 1) choicesContent += `${choice}`;
+                      else if (i !== choices.length) choicesContent += `, ${choice}`;
+                      else choicesContent += ` ${getMsg("or")} ${choice}`;
                     }
-                    // NOT EXECUTION : VOID
+                    content += ` ${getMsg("you_can_choose").replaceAll("{CHOICES}", choicesContent)}`;
                   }
 
-                  // function for var type question
-                  function VAR(answer) {
-                    if (defaulT && !answer) answer = defaulT;
-                    if (!defaulT && !answer) return;
-
-                    let action = instruction.split(";")[instruction.split(";").length - 1];
-                    let actions = action.split(":")
-
-                    if (actions[0].toLowerCase().includes("edit_jsonc")) {
-                      editFile(actions, "var", "cjson", answer);
-                    } else if (actions[0].toLowerCase().includes("edit_json")) {
-                      editFile(actions, "var", "json", answer)
-                    } else if (actions[0].toLowerCase().includes("exec")) {
-                      exec(actions[1], (error, stdout, stderr) => {
-                        console.log(stdout);
-                      })
-                    } else if (actions[0].toLowerCase().includes("edit_toml")) {
-                      editFile(actions, "var", "toml", answer);
-                    } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
-                      editFile(actions, "var", "dotenv", answer)
+                  async function re() {
+                    await wait(1000)
+                    let answer = prompt(content.yellow + " ");
+                    if (type === "yon") {
+                      YON(answer);
+                    } else if (type === "var") {
+                      VAR(answer)
+                    } else if (type === "sel") {
+                      let choices = defaulT.split(",");
+                      if (!choices.includes(answer)) {  console.error(getMsg("select_value_not_in_choices").replaceAll("{VALUE}", answer).red); await re(); return; }
+                      VAR(answer);
                     }
-                    // NOT EXECUTION : VOID
+
+                    // function for yes or no questions
+                    function YON(answer) {
+                      if (!answer) answer = defaulT;
+                      let action = instruction.split(";")[instruction.split(";").length - 1];
+
+                      let actionYes = action.split("§")[0];
+                      let actionNo = action.split("§")[1];
+
+                      let actions = []
+                      if (answer.toLowerCase() === "y") actions = actionYes.split(":");
+                      else actions = actionNo.split(":");
+
+                      if (actions[0].toLowerCase().includes("edit_jsonc")) {
+                        editFile(actions, "yon", "cjson", answer);
+                      } else if (actions[0].toLowerCase().includes("edit_json")) {
+                        editFile(actions, "yon", "json", answer)
+                      } else if (actions[0].toLowerCase().includes("exec")) {
+                        categories.RUN.push(actions[1]);
+                      } else if (actions[0].toLowerCase().includes("edit_toml")) {
+                        editFile(actions, "yon", "toml", answer);
+                      } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
+                        editFile(actions, "yon", "dotenv", answer)
+                      } else if (actions[0].toLowerCase().includes("edit_var")) {
+                        let vaR = actions[1].replaceAll(" ", "");
+                        let newValue = actions[2];
+                        if (newValue.endsWith(" ")) newValue = newValue.slice(0, -1);
+                        if (newValue.startsWith(" ")) newValue = newValue.slice(1);
+                        variables[vaR] = newValue;
+                      }
+                      // NOT EXECUTION : VOID
+                    }
+
+                    // function for var type question
+                    function VAR(answer) {
+                      if (defaulT && !answer) answer = defaulT;
+                      if (!defaulT && !answer) return;
+
+                      let action = instruction.split(";")[instruction.split(";").length - 1];
+                      let actions = action.split(":")
+
+                      if (actions[0].toLowerCase().includes("edit_jsonc")) {
+                        editFile(actions, "var", "cjson", answer);
+                      } else if (actions[0].toLowerCase().includes("edit_json")) {
+                        editFile(actions, "var", "json", answer)
+                      } else if (actions[0].toLowerCase().includes("exec")) {
+                        exec(actions[1], (error, stdout, stderr) => {
+                          console.log(stdout);
+                        })
+                      } else if (actions[0].toLowerCase().includes("edit_toml")) {
+                        editFile(actions, "var", "toml", answer);
+                      } else if (actions[0].toLowerCase().includes("edit_dotenv")) {
+                        editFile(actions, "var", "dotenv", answer)
+                      } else if (actions[0].toLowerCase().includes("edit_var")) {
+                        let vaR = actions[1].replaceAll(" ", "");
+                        let newValue = actions[2];
+                        if (newValue.endsWith(" ")) newValue = newValue.slice(0, -1);
+                        if (newValue.startsWith(" ")) newValue = newValue.slice(1);
+                        variables[vaR] = newValue.replaceAll("{RES}", answer);
+                      }
+                      // NOT EXECUTION : VOID
+                    }
                   }
+                  await re();
                 }
               }
             }
@@ -365,6 +409,7 @@ const init = async (link, options) => {
                 }
               }
             }
+            console.log(variables)
 
             if (categories.RUN.length !== 0) {
               console.log(" ")
@@ -373,19 +418,33 @@ const init = async (link, options) => {
 
               // Executing commands
               await wait(1000)
-              for (const cmd of categories["RUN"]) {
+              for (let cmd of categories["RUN"]) {
                 if (cmd.length !== 0) {
-                  if (cmd.toLowerCase().startsWith("qik.move")) {
-                    let args = cmd.split(" ");
-                    let target = args[1];
-                    let dest = args[2];
-                    fsExtra.moveSync(target, dest, { overwrite: true });
-                  } else if (cmd.toLowerCase().startsWith("qik.remove")) {
-                    let args = cmd.split(" ");
-                    let target = args[1];
-                    fs.rmSync(target, { recursive: true, force: true });
-                  } else {
-                    execSync(cmd, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+                  let conditionPattern = /^\((.*?)\)/gm;
+                  let condition = conditionPattern.exec(cmd);
+                  if (condition) condition = condition[1]; else condition = undefined;
+                  let running = false;
+                  if (condition) {
+                    let varName = condition.split("==")[0].replaceAll(" ", "");
+                    let varValue = condition.split("==")[1];
+                    if (varValue.startsWith(" ")) varValue = varValue.slice(1);
+                    if (varValue.endsWith(" ")) varValue = varValue.slice(0, -1);
+                    if (variables[varName] === varValue) running = true;
+                    cmd = cmd.replace(`(${condition})`, "");
+                  } else running = true;
+                  if (running === true) {
+                    if (cmd.toLowerCase().startsWith("qik.move")) {
+                      let args = cmd.split(" ");
+                      let target = args[1];
+                      let dest = args[2];
+                      fsExtra.moveSync(target, dest, { overwrite: true });
+                    } else if (cmd.toLowerCase().startsWith("qik.remove")) {
+                      let args = cmd.split(" ");
+                      let target = args[1];
+                      fs.rmSync(target, { recursive: true, force: true });
+                    } else {
+                      execSync(cmd, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+                    }
                   }
                 }
               }
