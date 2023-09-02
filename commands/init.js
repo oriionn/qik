@@ -277,7 +277,6 @@ const init = async (link, options) => {
                     }
                 }
             }
-            console.log(variables)
 
             // Questions
             if (categories.QUESTION.length !== 0) {
@@ -409,7 +408,6 @@ const init = async (link, options) => {
                 }
               }
             }
-            console.log(variables)
 
             if (categories.RUN.length !== 0) {
               console.log(" ")
