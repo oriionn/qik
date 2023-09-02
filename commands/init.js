@@ -153,17 +153,13 @@ const init = async (link, options) => {
         process.exit();
       }
 
-      execSync(`npx create-react-app ${projectName}`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
-      return;
+      return execSync(`npx create-react-app ${projectName}`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
     } else if (gitLink === "next") {
-      execSync(`npx create-next-app`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
-      return;
+      return execSync(`npx create-next-app`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
     } else if (gitLink === "tauri") {
-      execSync(`npm create tauri-app@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
-      return;
+      return execSync(`npm create tauri-app@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
     } else if (gitLink === "vue") {
-      execSync(`npm create vue@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
-      return;
+      return execSync(`npm create vue@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
     } else if (gitLink === "nuxt") {
       // Request project name
       let projectName = prompt(getMsg("project_name").cyan);
@@ -172,11 +168,11 @@ const init = async (link, options) => {
         process.exit();
       }
 
-      execSync(`npx nuxi@latest init ${projectName}`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
-      return;
+      return execSync(`npx nuxi@latest init ${projectName}`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
     } else if (gitLink === "vite") {
-      execSync(`npm create vite@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
-      return;
+      return execSync(`npm create vite@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
+    } else if (gitLink === "astro") {
+      return execSync(`npm create astro@latest`, {stdio: 'inherit', stdin: 'inherit', sterr: 'inherit'});
     }
   }
 
