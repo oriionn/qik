@@ -9,6 +9,13 @@ You should choose Qik because Qik is simple. In fact, with our full docs availab
 npm install -g qik-cli
 ```
 
+## Simple Usage
+For a simple usage, you can use the `init` command to initialize a new project from a template.
+```bash
+qik init <templateGitLink>
+```
+For more details about `init` command, please visit the [documentation](https://qik-docs.oriondev.fr/init_a_project/init_project).
+
 ## Documentation
 For more information, please visit the [documentation](https://qik-docs.oriondev.fr/).
 
