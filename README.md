@@ -1,5 +1,5 @@
 # qik
-A simple &amp; configurable template manager.
+A simple and configurable template manager.
 
 ## Why choose qik?
 You should choose Qik because Qik is simple. In fact, with our full docs available [here](https://qik-docs.oriondev.fr/) you can easily create `Qikfile` to offer your templates to Qik users. What's more, whatever the name of your template, the name will never be taken as we use git and the user to define aliases.
