@@ -1,6 +1,6 @@
 {
   "name": "qik-cli",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "A simple and configurable template manager.",
   "main": "app.js",
   "scripts": {
