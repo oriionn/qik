@@ -272,7 +272,7 @@ const init = async (link, options) => {
           name: "continue",
           message: getMsg("continue"),
           default: false
-        }])).continue){ fs.rmSync(`${dirName}`, { recursive: true, force: true }); process.exit(); }
+        }])).continue){ process.exit() }
 
         // Warning Message
         if (categories.WARNING_MESSAGE.length !== 0) {
@@ -292,10 +292,11 @@ const init = async (link, options) => {
         }
 
         // Copy the repo in the main directory
-        await fsExtra.copySync(`${dirName}`, `./`);
-        fs.rmSync(`${dirName}`, { recursive: true, force: true });
-        fs.rmSync(`./.git`, { recursive: true, force: true });
-        fs.rmSync(`./Qikfile`, { force: true });
+        if(dirName != '.'){
+          await fsExtra.copySync(`${dirName}`, `./`);
+          fs.rmSync(`${dirName}`, { recursive: true, force: true });
+        }
+        if(!doesQikFileAlreadyExist) fs.rmSync(`./Qikfile`, { force: true });
 
         for (const variable in categories["VAR"]) {
             if (variable.length >= 1) {
