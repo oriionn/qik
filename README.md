@@ -1,3 +1,5 @@
+![Project Banner](https://banapi.oriondev.fr/?name=Qik&description=A%20simple%20and%20configurable%20template%20manager.)
+
 # qik
 A simple and configurable template manager.
 
